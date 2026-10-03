@@ -6,8 +6,8 @@ mini-shirasu (ブラシ付き DC モータドライバ。ファームは
 (`robomas_can_tx` / `robomas_can_rx`) 越しに話す ROS 2 パッケージ。
 
 プロトコルは mini-shirasu2 の `docs/superpowers/specs/2026-10-03-minishirasu-firm-design.md`
-の「プロトコル」「CAN」に従う。**ファーム側はまだ実装中なので、実機での確認はしていない**
-(確認は同梱の模擬基板 `fake_mini_shirasu` で行った)。
+の「プロトコル」「CAN」と、ファームの実装 (`minishirasu-firm/src/protocol.rs`, `state.rs`, `config.rs`) に合わせてある。
+**CAN 越しに実機の基板と話す確認はまだしていない** (確認は同梱の模擬基板 `fake_mini_shirasu` で行った)。
 
 対応環境: ROS 2 Lyrical Luth / Ubuntu 26.04、C++26 (`CMAKE_CXX_STANDARD` で上書き可。C++23 以降が必須)。
 
@@ -19,7 +19,7 @@ mini-shirasu (ブラシ付き DC モータドライバ。ファームは
 | `include/mini_shirasu_ros/settings.hpp` | SetParam の設定 ID と名前の対応 |
 | `src/mini_shirasu_node.cpp` | ノード本体 (基板 1 枚ぶん)。ROSの入出力と手順だけを見る |
 | `msg/Status.msg` | 基板の状態 (物理単位) |
-| `config/mini_shirasu_node.yaml` | パラメータ (settings は仮の値) |
+| `config/mini_shirasu_node.yaml` | パラメータ (settings はファームの bench.rs で実機が動いた値) |
 | `launch/mini_shirasu_node.launch.py` | 起動。`bridge:=true` で robomas_bridge も立てる |
 | `test/protocol_test.cpp` | プロトコルのテスト (ROS不要) |
 | `test/fake_mini_shirasu.cpp` | 模擬基板。CAN のトピックを受けて、ファームの状態機械を真似て返す |
@@ -38,8 +38,8 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 | pub | `can_tx_topic` (既定 `robomas_can_tx`) | `robomas_plugins/msg/Frame` |
 | sub | `can_rx_topic` (既定 `robomas_can_rx`) | `robomas_plugins/msg/Frame` |
 | sub | `~/target_current` | `std_msgs/msg/Float64` [A] (`mode: current` のとき) |
-| sub | `~/target_velocity` | `std_msgs/msg/Float64` [rad/s] モータ軸 (`mode: velocity` のとき) |
-| sub | `~/target_position` | `std_msgs/msg/Float64` [回転] モータ軸 (`mode: position` のとき) |
+| sub | `~/target_velocity` | `std_msgs/msg/Float64` [rad/s] (`mode: velocity` のとき) |
+| sub | `~/target_position` | `std_msgs/msg/Float64` [回転] (`mode: position` のとき) |
 | pub | `~/status` | `mini_shirasu_ros/msg/Status` |
 | srv | `~/enable` | `std_srvs/srv/SetBool` (true で `mode` に、false で無効に) |
 | srv | `~/reset_fault` | `std_srvs/srv/Trigger` (異常ラッチの解除。設定前なら解除してから設定する) |
@@ -76,7 +76,12 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 名前と単位は minishirasu-firm の設計書「設定値」と同じ。`status_period_ms` 以外はすべて必須で、
 1 つでも欠けていればノードは起動しない。値は f32 で送られる。真偽値 (`encoder_reversed`) は 0 / 1。
 
-`config/mini_shirasu_node.yaml` の値は**仮の値**なので、モータとエンコーダに合わせて決めること。
+**速度と位置は、`encoder_cpr` が 1 回転と数える軸が基準**になる。エンコーダの付いた軸ではなく、
+`encoder_cpr` に減速比を織り込めば駆動軸 (ホイール) 基準にできる。
+
+`config/mini_shirasu_node.yaml` の値は、mini-shirasu2 の `minishirasu-firm/src/bench.rs` で
+実機 (RZ-735VA-8519、減速比 11.86) の電流・速度・位置モードが動いた値で、駆動軸基準。
+別のモータで使うなら bench.rs のコメントを見て決め直すこと。
 
 ## CAN ID
 
@@ -90,6 +95,28 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 | `can_id.response` | 0x201 | 受信 (応答) |
 
 複数枚つなぐときは基板ごとに ID を変え、ノードも基板ごとに 1 つ立てる。
+
+## 注意
+
+- **CAN は 1Mbps、標準 ID**。ビットレートは USB-CAN ブリッジ (robomas_plugins が話す Debug_CAN ボード)
+  側で合わせること。このノードは ID とデータしか扱わない
+- **ファームには通信タイムアウトが無い**。このノードは目標が途切れたらゼロを送り、
+  正常終了時には `SetMode(無効)` を送るが、ノードやブリッジ、PC が落ちたときは出力が止まらない。
+  止めるのは緊急停止スイッチに頼ること
+- メッセージは CAN フレームをまたぐ (SetParam は 9 バイトで 2 フレーム、Status は 24 バイトで 3 フレーム)。
+  ID ごとに連結して 0x00 で切り出している
+
+### 応答が来ないとき
+
+ファームの CAN 送受信 (CanRx / CanTx) はまだ実機で確かめられていない。応答が来ないときは、どこで止まっているかを順に見る。
+
+1. `ros2 topic echo /robomas_can_tx` で、コマンド (ID 0x200) のフレームが出ていること
+2. robomas_bridge のログに `negotiation success` が出ていること (出るまでブリッジは何も送らない)
+3. `ros2 topic echo /robomas_can_rx` で、応答 (ID 0x201) や Status (ID 0x101) のフレームが返ってきているか
+4. 基板のログ (defmt / RTT) に `nack:` の行が出ていないか。出ていれば理由と設定 ID が分かる
+
+3 で何も返ってこず、基板のログにも何も出ないなら、ファーム側の受信を疑う。
+そのときは基板のログを mini-shirasu2 側に渡す。
 
 ## テスト
 

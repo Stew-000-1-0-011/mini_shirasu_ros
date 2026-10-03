@@ -14,7 +14,7 @@ bool saturated_lower   # 制御出力が下側に飽和
 bool vdc_low           # 母線電圧が低く、測定値を更新できていない
 
 float64 current        # [A]
-float64 velocity       # [rad/s] モータ軸
-float64 position       # [回転] モータ軸
+float64 velocity       # [rad/s] encoder_cpr を数える軸
+float64 position       # [回転] encoder_cpr を数える軸
 float64 vdc            # [V] 母線電圧
 uint16 temperature_raw # 温度の ADC 生値
