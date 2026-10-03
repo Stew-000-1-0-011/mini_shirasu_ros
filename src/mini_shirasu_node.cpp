@@ -85,11 +85,11 @@ namespace {
 			// --- 起動時のみ ---
 			const auto tx_topic = this->declare_parameter<std::string>("can_tx_topic", "robomas_can_tx");
 			const auto rx_topic = this->declare_parameter<std::string>("can_rx_topic", "robomas_can_rx");
-			this->target_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.target", 0x100));
-			this->status_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.status", 0x101));
-			this->command_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.command", 0x200));
+			this->target_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.target", 0x110));
+			this->status_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.status", 0x120));
+			this->command_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.command", 0x130));
 			this->response_id_ =
-				static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.response", 0x201));
+				static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.response", 0x140));
 			this->mode_ = mode_from_name(this->declare_parameter<std::string>("mode", "velocity"));
 			this->want_enabled_ = this->declare_parameter<bool>("enable_on_start", true);
 			const double rate = this->declare_parameter<double>("control_rate", 50.0);

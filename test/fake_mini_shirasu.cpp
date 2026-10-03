@@ -26,11 +26,11 @@ namespace {
 	class FakeMiniShirasu final : public rclcpp::Node {
 	public:
 		FakeMiniShirasu() : rclcpp::Node("fake_mini_shirasu") {
-			this->target_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.target", 0x100));
-			this->status_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.status", 0x101));
-			this->command_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.command", 0x200));
+			this->target_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.target", 0x110));
+			this->status_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.status", 0x120));
+			this->command_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.command", 0x130));
 			this->response_id_ =
-				static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.response", 0x201));
+				static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.response", 0x140));
 			this->tau_ = this->declare_parameter<double>("tau", 0.05);
 
 			this->rx_pub_ = this->create_publisher<Frame>("robomas_can_rx", 100);

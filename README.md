@@ -89,10 +89,10 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 
 | パラメータ | 既定 | 向き |
 | --- | --- | --- |
-| `can_id.target` | 0x100 | 送信 (目標値) |
-| `can_id.status` | 0x101 | 受信 (状態) |
-| `can_id.command` | 0x200 | 送信 (コマンド) |
-| `can_id.response` | 0x201 | 受信 (応答) |
+| `can_id.target` | 0x110 | 送信 (目標値) |
+| `can_id.status` | 0x120 | 受信 (状態) |
+| `can_id.command` | 0x130 | 送信 (コマンド) |
+| `can_id.response` | 0x140 | 受信 (応答) |
 
 複数枚つなぐときは基板ごとに ID を変え、ノードも基板ごとに 1 つ立てる。
 
@@ -110,9 +110,9 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 
 ファームの CAN 送受信 (CanRx / CanTx) はまだ実機で確かめられていない。応答が来ないときは、どこで止まっているかを順に見る。
 
-1. `ros2 topic echo /robomas_can_tx` で、コマンド (ID 0x200) のフレームが出ていること
+1. `ros2 topic echo /robomas_can_tx` で、コマンド (ID 0x130) のフレームが出ていること
 2. robomas_bridge のログに `negotiation success` が出ていること (出るまでブリッジは何も送らない)
-3. `ros2 topic echo /robomas_can_rx` で、応答 (ID 0x201) や Status (ID 0x101) のフレームが返ってきているか
+3. `ros2 topic echo /robomas_can_rx` で、応答 (ID 0x140) や Status (ID 0x120) のフレームが返ってきているか
 4. 基板のログ (defmt / RTT) に `nack:` の行が出ていないか。出ていれば理由と設定 ID が分かる
 
 3 で何も返ってこず、基板のログにも何も出ないなら、ファーム側の受信を疑う。

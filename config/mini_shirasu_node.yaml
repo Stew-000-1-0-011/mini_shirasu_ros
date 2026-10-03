@@ -8,10 +8,10 @@ mini_shirasu_node:
     can_rx_topic: robomas_can_rx
     # 基板の config.rs のコンパイル時定数と合わせる (既定は設計書の値)
     can_id:
-      target: 0x100
-      status: 0x101
-      command: 0x200
-      response: 0x201
+      target: 0x110
+      status: 0x120
+      command: 0x130
+      response: 0x140
     mode: velocity            # current / velocity / position
     enable_on_start: true     # false なら ~/enable で有効にするまで無効のまま
     control_rate: 50.0        # [Hz] 目標値を送る周期
