@@ -1,0 +1,49 @@
+# mini_shirasu_node のパラメータ (基板 1 枚ぶん)。
+# 「起動時のみ」以外は ros2 param set で実行中に変えられる。
+# 複数枚使うときは、ノード名ごとに can_id を変えたファイルを重ねる (oumuamua_bringup を参照)。
+mini_shirasu_node:
+  ros__parameters:
+    # --- 起動時のみ ---
+    can_tx_topic: robomas_can_tx
+    can_rx_topic: robomas_can_rx
+    # 基板の config.rs のコンパイル時定数と合わせる (既定は設計書の値)
+    can_id:
+      target: 0x100
+      status: 0x101
+      command: 0x200
+      response: 0x201
+    mode: velocity            # current / velocity / position
+    enable_on_start: true     # false なら ~/enable で有効にするまで無効のまま
+    control_rate: 50.0        # [Hz] 目標値を送る周期
+
+    # --- 基板に SetParam で送る設定 (status_period_ms 以外は全部必須) ---
+    # 意味と単位は minishirasu-firm の設計書「設定値」。下の値は仮の値なので、モータに合わせること
+    settings:
+      vdcmax: 30.0            # [V]
+      ibase: 10.0             # [A]
+      wbase: 1000.0           # [rad/s]
+      ke: 0.01                # [V/(rad/s)]
+      ckp: 1.0                # [V/A]
+      cki: 1000.0             # [V/(A s)]
+      dead_duty: 0.0
+      i_threshold: 0.1        # [A]
+      duty_max: 0.95
+      vmax: 24.0              # [V]
+      imax: 5.0               # [A]
+      wkp: 0.01               # [A/(rad/s)]
+      wki: 0.1                # [A/(rad/s s)]
+      wb: 1.0
+      wmax: 800.0             # [rad/s]
+      pkp: 10.0               # [1/s]
+      pmax: 1000.0            # [回転]
+      accel_to_current: 0.0   # [A/(rad/s^2)]
+      encoder_cpr: 2048.0     # [カウント/回転] 4逓倍後
+      w_filter_alpha: 0.5
+      encoder_reversed: 0.0   # 0 / 1
+      status_period_ms: 20.0  # 0 で Status を止める
+
+    # --- 実行中に変えられる ---
+    target_timeout: 0.2       # [s] 目標がこれより来なければ電流・速度はゼロを送る
+    command_timeout: 0.1      # [s] Ack/Nack を待つ時間
+    command_retries: 3        # 応答が無いときの再送回数
+    status_timeout: 0.5       # [s] Status がこれより途切れたら設定し直す。0 で無効
