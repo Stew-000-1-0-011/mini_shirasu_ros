@@ -21,6 +21,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(robomas_plugins REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
@@ -55,6 +56,7 @@ target_link_libraries(mini_shirasu_node
 		rclcpp::rclcpp
 		${std_msgs_TARGETS}
 		${std_srvs_TARGETS}
+		${sensor_msgs_TARGETS}
 		${robomas_plugins_TARGETS}
 )
 

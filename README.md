@@ -41,6 +41,7 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 | sub | `~/target_velocity` | `std_msgs/msg/Float64` [rad/s] (`mode: velocity` のとき) |
 | sub | `~/target_position` | `std_msgs/msg/Float64` [回転] (`mode: position` のとき) |
 | pub | `~/status` | `mini_shirasu_ros/msg/Status` |
+| pub | `~/joint_state` | `sensor_msgs/msg/JointState` (Status の位置 [rad]・速度 [rad/s]・電流 [A] を標準の型で。車輪オドメトリ用) |
 | srv | `~/enable` | `std_srvs/srv/SetBool` (true で `mode` に、false で無効に) |
 | srv | `~/reset_fault` | `std_srvs/srv/Trigger` (異常ラッチの解除。設定前なら解除してから設定する) |
 | srv | `~/set_origin` | `std_srvs/srv/Trigger` (いったん無効にして原点を取り、元に戻す) |

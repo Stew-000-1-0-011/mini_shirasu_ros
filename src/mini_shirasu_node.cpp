@@ -19,6 +19,7 @@
 #include <format>
 #include <limits>
 #include <memory>
+#include <numbers>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -28,6 +29,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <robomas_plugins/msg/frame.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 #include <std_srvs/srv/trigger.hpp>
@@ -112,6 +114,7 @@ namespace {
 			// --- 入出力 ---
 			this->tx_pub_ = this->create_publisher<Frame>(tx_topic, 100);
 			this->status_pub_ = this->create_publisher<mini_shirasu_ros::msg::Status>("~/status", 10);
+			this->joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_state", rclcpp::SensorDataQoS{});
 			this->rx_sub_ = this->create_subscription<Frame>(
 				rx_topic, 100, [this](const Frame& f) { this->on_frame(f); }
 			);
@@ -409,6 +412,16 @@ namespace {
 			msg.vdc = s.vdc;
 			msg.temperature_raw = s.temp;
 			this->status_pub_->publish(msg);
+
+			// 標準の型でも出す (車輪オドメトリなど、このパッケージに依存させたくない側のため)。
+			// 位置と速度は encoder_cpr を数える軸の [rad], [rad/s]、effort は電流 [A]
+			sensor_msgs::msg::JointState js{};
+			js.header.stamp = msg.header.stamp;
+			js.name.push_back(this->get_name());
+			js.position.push_back(msg.position * 2.0 * std::numbers::pi);
+			js.velocity.push_back(msg.velocity);
+			js.effort.push_back(msg.current);
+			this->joint_state_pub_->publish(js);
 		}
 
 		void on_ack(const std::uint8_t command) {
@@ -489,6 +502,7 @@ namespace {
 
 		rclcpp::Publisher<Frame>::SharedPtr tx_pub_{};
 		rclcpp::Publisher<mini_shirasu_ros::msg::Status>::SharedPtr status_pub_{};
+		rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_{};
 		rclcpp::Subscription<Frame>::SharedPtr rx_sub_{};
 		std::vector<rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr> target_subs_{};
 		rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr enable_srv_{};
