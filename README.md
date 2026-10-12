@@ -59,7 +59,9 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 `command_retries` 回まで再送する。
 
 - 設定中に応答が無いまま再送が尽きたら、基板かブリッジがまだ起きていないとみなし、1 秒後に最初からやり直す
-- Nack が返ったら理由 (設定エラーなら原因の設定名も) をログに出し、残りの手順は送らない
+- Nack が返ったら理由 (設定エラーなら原因の設定名も) をログに出し、残りの手順は送らない。
+  ただし `SetParam` への設定エラーは、最後の `SetParam` までは無視して続ける
+  (基板は値を保存してから設定全体を検査するので、前回の無効な値が残っていると途中で返る)
 - 設定が済んだ後に Status が `status_timeout` 以上途切れたら、基板が再起動して設定が消えたとみなし、設定し直す
   (`status_period_ms` を 0 にするなら `status_timeout` も 0 にすること)
 

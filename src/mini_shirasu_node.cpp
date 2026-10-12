@@ -12,6 +12,7 @@
 ///
 /// 符号化・復号は ROS 非依存 (protocol.cpp)。ここは ROS の入出力と手順だけを見る。
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -452,6 +453,14 @@ namespace {
 				if (n.reason == proto::nack_reason::bad_frame) {
 					RCLCPP_WARN(this->get_logger(), "the board received a broken command frame");
 				}
+				return;
+			}
+			// 基板は値を保存したうえで、設定全体が無効だと config_error を返す。前回の値が残っていると
+			// 途中の SetParam で返るが、残りを送れば直るかもしれないので、最後の SetParam までは続ける
+			if (n.reason == proto::nack_reason::config_error && std::holds_alternative<proto::SetParam>(this->pending_->command)
+				&& std::ranges::any_of(this->queue_, [](const auto& c) { return std::holds_alternative<proto::SetParam>(c); })) {
+				this->pending_.reset();
+				this->send_next_command();
 				return;
 			}
 			std::string detail{};
