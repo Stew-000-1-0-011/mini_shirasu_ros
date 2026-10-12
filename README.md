@@ -51,9 +51,10 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 
 ### 起動時の手順
 
-1. `SetMode(無効)` (設定は無効中しか受け付けないので)
-2. `settings.*` を設定 ID の順に `SetParam`
-3. `enable_on_start: true` なら `SetMode(mode)`
+1. `reset_fault_on_start: true` なら `ResetFault` (前回の異常ラッチが残っていても設定できるように。既定は false)
+2. `SetMode(無効)` (設定は無効中しか受け付けないので)
+3. `settings.*` を設定 ID の順に `SetParam`
+4. `enable_on_start: true` なら `SetMode(mode)`
 
 コマンドは 1 つずつ送り、Ack を待ってから次を送る。`command_timeout` で応答が無ければ
 `command_retries` 回まで再送する。

@@ -14,6 +14,7 @@ mini_shirasu_node:
       response: 0x140
     mode: velocity            # current / velocity / position
     enable_on_start: true     # false なら ~/enable で有効にするまで無効のまま
+    reset_fault_on_start: false  # true なら起動時に異常ラッチを解除してから設定する
     control_rate: 50.0        # [Hz] 目標値を送る周期
 
     # --- 基板に SetParam で送る設定 (status_period_ms 以外は全部必須) ---

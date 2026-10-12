@@ -95,6 +95,7 @@ namespace {
 				static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.response", 0x140));
 			this->mode_ = mode_from_name(this->declare_parameter<std::string>("mode", "velocity"));
 			this->want_enabled_ = this->declare_parameter<bool>("enable_on_start", true);
+			this->reset_fault_on_start_ = this->declare_parameter<bool>("reset_fault_on_start", false);
 			const double rate = this->declare_parameter<double>("control_rate", 50.0);
 			if (!(rate > 0.0)) {
 				throw std::invalid_argument("control_rate must be positive");
@@ -239,7 +240,8 @@ namespace {
 			this->last_status_.reset();
 			this->last_attempt_ = this->now();
 
-			if (reset_fault_first) {
+			// 起動時の設定が済むまでは、やり直すたびに異常ラッチの解除から始める
+			if (reset_fault_first || this->reset_fault_on_start_) {
 				this->enqueue(proto::ResetFault{});
 			}
 			this->enqueue(proto::SetMode{.mode = proto::mode::disabled});
@@ -443,6 +445,7 @@ namespace {
 				&& (std::holds_alternative<proto::SetParam>(done) || std::holds_alternative<proto::SetMode>(done))) {
 				this->configuring_ = false;
 				this->configured_ = true;
+				this->reset_fault_on_start_ = false;
 				RCLCPP_INFO(this->get_logger(), "configured (%s)", this->enabled_ ? "enabled" : "disabled");
 			}
 			this->send_next_command();
@@ -496,6 +499,7 @@ namespace {
 
 		// 状態
 		bool want_enabled_{true};
+		bool reset_fault_on_start_{false};  ///< 最初の設定が済むまで true のまま
 		bool configuring_{false};
 		bool configured_{false};
 		bool enabled_{false};
