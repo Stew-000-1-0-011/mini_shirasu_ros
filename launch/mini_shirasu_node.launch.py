@@ -3,10 +3,9 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
-from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
@@ -16,9 +15,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'params',
-            default_value=PathJoinSubstitution(
-                [FindPackageShare('mini_shirasu_ros'), 'config', 'mini_shirasu_node.yaml']),
-            description='mini_shirasu_node のパラメータファイル',
+            description='mini_shirasu_node のパラメータファイル (必須。mini_shirasu_node は既定値を持たない)',
         ),
         DeclareLaunchArgument(
             'bridge', default_value='false',

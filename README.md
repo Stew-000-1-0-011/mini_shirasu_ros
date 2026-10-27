@@ -19,15 +19,17 @@ mini-shirasu (ブラシ付き DC モータドライバ。ファームは
 | `include/mini_shirasu_ros/settings.hpp` | SetParam の設定 ID と名前の対応 |
 | `src/mini_shirasu_node.cpp` | ノード本体 (基板 1 枚ぶん)。ROSの入出力と手順だけを見る |
 | `msg/Status.msg` | 基板の状態 (物理単位) |
-| `config/mini_shirasu_node.yaml` | パラメータ (settings はファームの bench.rs で実機が動いた値) |
 | `launch/mini_shirasu_node.launch.py` | 起動。`bridge:=true` で robomas_bridge も立てる |
 | `test/protocol_test.cpp` | プロトコルのテスト (ROS不要) |
 | `test/fake_mini_shirasu.cpp` | 模擬基板。CAN のトピックを受けて、ファームの状態機械を真似て返す |
 
+
+**パラメータに既定値は無い。** 全部パラメータファイルで与える (足りなければ起動時にエラーで止まる)。この機体の値と各項目の説明は oumuamua の `src/oumuamua_bringup/config/mini_shirasu.yaml` にある。
+
 ## 使い方
 
 ```bash
-ros2 launch mini_shirasu_ros mini_shirasu_node.launch.py bridge:=true
+ros2 launch mini_shirasu_ros mini_shirasu_node.launch.py params:=/path/to/mini_shirasu_node.yaml bridge:=true
 ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{data: 50.0}"
 ```
 
@@ -35,8 +37,8 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 
 | 方向 | 名前 | 型 |
 | --- | --- | --- |
-| pub | `can_tx_topic` (既定 `robomas_can_tx`) | `robomas_plugins/msg/Frame` |
-| sub | `can_rx_topic` (既定 `robomas_can_rx`) | `robomas_plugins/msg/Frame` |
+| pub | `can_tx_topic` (例 `robomas_can_tx`) | `robomas_plugins/msg/Frame` |
+| sub | `can_rx_topic` (例 `robomas_can_rx`) | `robomas_plugins/msg/Frame` |
 | sub | `~/target_current` | `std_msgs/msg/Float64` [A] (`mode: current` のとき) |
 | sub | `~/target_velocity` | `std_msgs/msg/Float64` [rad/s] (`mode: velocity` のとき) |
 | sub | `~/target_position` | `std_msgs/msg/Float64` [回転] (`mode: position` のとき) |
@@ -83,7 +85,7 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 **速度と位置は、`encoder_cpr` が 1 回転と数える軸が基準**になる。エンコーダの付いた軸ではなく、
 `encoder_cpr` に減速比を織り込めば駆動軸 (ホイール) 基準にできる。
 
-`config/mini_shirasu_node.yaml` の値は、mini-shirasu2 の `minishirasu-firm/src/bench.rs` で
+oumuamua の `src/oumuamua_bringup/config/mini_shirasu.yaml` の `settings` は、mini-shirasu2 の `minishirasu-firm/src/bench.rs` で
 実機 (RZ-735VA-8519、減速比 11.86) の電流・速度・位置モードが動いた値で、駆動軸基準。
 別のモータで使うなら bench.rs のコメントを見て決め直すこと。
 
@@ -91,7 +93,7 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 
 ストリームごとに ID を 1 つ使う。ファームの `config.rs` のコンパイル時定数と合わせること。
 
-| パラメータ | 既定 | 向き |
+| パラメータ | 例 (oumuamua の wheel0) | 向き |
 | --- | --- | --- |
 | `can_id.target` | 0x110 | 送信 (目標値) |
 | `can_id.status` | 0x120 | 受信 (状態) |
@@ -136,5 +138,5 @@ CAN フレームへの分割と再結合、Q16.16)。
 
 ```bash
 ros2 run mini_shirasu_ros fake_mini_shirasu
-ros2 run mini_shirasu_ros mini_shirasu_node --ros-args --params-file $(ros2 pkg prefix mini_shirasu_ros)/share/mini_shirasu_ros/config/mini_shirasu_node.yaml
+ros2 run mini_shirasu_ros mini_shirasu_node --ros-args -r __node:=wheel0 --params-file /path/to/oumuamua/src/oumuamua_bringup/config/mini_shirasu.yaml
 ```

@@ -77,7 +77,7 @@ install(TARGETS mini_shirasu_node fake_mini_shirasu
 install(DIRECTORY include/
 	DESTINATION include
 )
-install(DIRECTORY config launch
+install(DIRECTORY launch
 	DESTINATION share/${PROJECT_NAME}
 )
 

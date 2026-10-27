@@ -86,17 +86,17 @@ namespace {
 	public:
 		MiniShirasuNode() : rclcpp::Node("mini_shirasu_node") {
 			// --- 起動時のみ ---
-			const auto tx_topic = this->declare_parameter<std::string>("can_tx_topic", "robomas_can_tx");
-			const auto rx_topic = this->declare_parameter<std::string>("can_rx_topic", "robomas_can_rx");
-			this->target_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.target", 0x110));
-			this->status_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.status", 0x120));
-			this->command_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.command", 0x130));
+			const auto tx_topic = this->declare_parameter<std::string>("can_tx_topic");
+			const auto rx_topic = this->declare_parameter<std::string>("can_rx_topic");
+			this->target_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.target"));
+			this->status_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.status"));
+			this->command_id_ = static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.command"));
 			this->response_id_ =
-				static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.response", 0x140));
-			this->mode_ = mode_from_name(this->declare_parameter<std::string>("mode", "velocity"));
-			this->want_enabled_ = this->declare_parameter<bool>("enable_on_start", true);
-			this->reset_fault_on_start_ = this->declare_parameter<bool>("reset_fault_on_start", false);
-			const double rate = this->declare_parameter<double>("control_rate", 50.0);
+				static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.response"));
+			this->mode_ = mode_from_name(this->declare_parameter<std::string>("mode"));
+			this->want_enabled_ = this->declare_parameter<bool>("enable_on_start");
+			this->reset_fault_on_start_ = this->declare_parameter<bool>("reset_fault_on_start");
+			const double rate = this->declare_parameter<double>("control_rate");
 			if (!(rate > 0.0)) {
 				throw std::invalid_argument("control_rate must be positive");
 			}
@@ -104,10 +104,10 @@ namespace {
 			this->load_settings();
 
 			// --- 実行中に変えられる ---
-			this->declare_parameter<double>("target_timeout", 0.2);
-			this->declare_parameter<double>("command_timeout", 0.1);
-			this->declare_parameter<int>("command_retries", 3);
-			this->declare_parameter<double>("status_timeout", 0.5);
+			this->declare_parameter<double>("target_timeout");
+			this->declare_parameter<double>("command_timeout");
+			this->declare_parameter<int>("command_retries");
+			this->declare_parameter<double>("status_timeout");
 			this->read_runtime_params();
 			this->param_cb_ = this->add_post_set_parameters_callback(
 				[this](const std::vector<rclcpp::Parameter>&) { this->read_runtime_params(); }
@@ -529,7 +529,14 @@ namespace {
 
 auto main(int argc, char** argv) -> int {
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<MiniShirasuNode>());
+	try {
+		rclcpp::spin(std::make_shared<MiniShirasuNode>());
+	} catch (const std::exception& e) {
+		// パラメータが足りないときなど (既定値は持たないので、全部パラメータファイルで与える)
+		RCLCPP_FATAL(rclcpp::get_logger("mini_shirasu_node"), "%s", e.what());
+		rclcpp::shutdown();
+		return 1;
+	}
 	rclcpp::shutdown();
 	return 0;
 }
