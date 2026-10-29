@@ -42,6 +42,7 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 | sub | `~/target_current` | `std_msgs/msg/Float64` [A] (`mode: current` のとき) |
 | sub | `~/target_velocity` | `std_msgs/msg/Float64` [rad/s] (`mode: velocity` のとき) |
 | sub | `~/target_position` | `std_msgs/msg/Float64` [回転] (`mode: position` のとき) |
+| sub | `~/target_duty` | `std_msgs/msg/Float64` [-1, 1] (`mode: duty` のとき。電流ループを使わずそのまま PWM に出す。ファームの `duty_max` で切り詰められる。デューティモードの入ったファーム (mini-shirasu2 5617592 以降) が要る) |
 | pub | `~/status` | `mini_shirasu_ros/msg/Status` |
 | pub | `~/joint_state` | `sensor_msgs/msg/JointState` (Status の位置 [rad]・速度 [rad/s]・電流 [A] を標準の型で。車輪オドメトリ用) |
 | srv | `~/enable` | `std_srvs/srv/SetBool` (true で `mode` に、false で無効に) |

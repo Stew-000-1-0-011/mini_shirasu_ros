@@ -26,6 +26,7 @@ namespace mini_shirasu_ros::protocol {
 		inline constexpr std::uint8_t target_current = 0x01;
 		inline constexpr std::uint8_t target_velocity = 0x02;
 		inline constexpr std::uint8_t target_position = 0x03;
+		inline constexpr std::uint8_t target_duty = 0x04;
 		inline constexpr std::uint8_t set_mode = 0x10;
 		inline constexpr std::uint8_t set_param = 0x11;
 		inline constexpr std::uint8_t reset_fault = 0x12;
@@ -44,6 +45,8 @@ namespace mini_shirasu_ros::protocol {
 		inline constexpr std::uint8_t position = 3;
 		/// Status でだけ使う
 		inline constexpr std::uint8_t fault = 4;
+		/// 電流ループを使わず、目標のデューティをそのまま PWM に出す (duty_max で切り詰める)
+		inline constexpr std::uint8_t duty = 5;
 	}
 
 	/// Status のフラグ
@@ -77,6 +80,10 @@ namespace mini_shirasu_ros::protocol {
 		float velocity_ff{};      ///< [rad/s]
 		float accel_ff{};         ///< [rad/s^2]
 		auto operator==(const TargetPosition&) const -> bool = default;
+	};
+	struct TargetDuty {
+		float duty{};  ///< [-1, 1]。正で正転
+		auto operator==(const TargetDuty&) const -> bool = default;
 	};
 	struct SetMode {
 		std::uint8_t mode{};
@@ -121,6 +128,7 @@ namespace mini_shirasu_ros::protocol {
 		TargetCurrent,
 		TargetVelocity,
 		TargetPosition,
+		TargetDuty,
 		SetMode,
 		SetParam,
 		ResetFault,

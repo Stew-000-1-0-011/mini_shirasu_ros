@@ -47,7 +47,8 @@ namespace {
 		if (name == "current") { return proto::mode::current; }
 		if (name == "velocity") { return proto::mode::velocity; }
 		if (name == "position") { return proto::mode::position; }
-		throw std::invalid_argument(std::format("mode must be current, velocity or position (got '{}')", name));
+		if (name == "duty") { return proto::mode::duty; }
+		throw std::invalid_argument(std::format("mode must be current, velocity, position or duty (got '{}')", name));
 	}
 
 	auto nack_reason_text(const std::uint8_t reason) -> const char* {
@@ -131,6 +132,10 @@ namespace {
 			this->target_subs_.push_back(this->create_subscription<std_msgs::msg::Float64>(
 				"~/target_position", 10,
 				[this](const std_msgs::msg::Float64& m) { this->on_target(proto::mode::position, m.data); }
+			));
+			this->target_subs_.push_back(this->create_subscription<std_msgs::msg::Float64>(
+				"~/target_duty", 10,
+				[this](const std_msgs::msg::Float64& m) { this->on_target(proto::mode::duty, m.data); }
 			));
 
 			this->enable_srv_ = this->create_service<std_srvs::srv::SetBool>(
@@ -359,6 +364,9 @@ namespace {
 						proto::TargetPosition{.position = proto::revolutions_to_q16_16(this->target_)}
 					);
 				}
+				break;
+			case proto::mode::duty:
+				this->send(this->target_id_, proto::TargetDuty{.duty = fresh ? static_cast<float>(this->target_) : 0.f});
 				break;
 			default: break;
 			}

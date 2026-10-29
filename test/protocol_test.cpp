@@ -37,6 +37,7 @@ namespace {
 			proto::TargetCurrent{.current = 1.5f},
 			proto::TargetVelocity{.velocity = -12.25f, .accel_ff = 3.0f},
 			proto::TargetPosition{.position = -(3 << 16), .velocity_ff = 1.0f, .accel_ff = -2.0f},
+			proto::TargetDuty{.duty = -0.25f},
 			proto::SetMode{.mode = proto::mode::velocity},
 			proto::SetParam{.id = 0x21, .value = 8192.0f},
 			proto::ResetFault{},
@@ -90,8 +91,8 @@ namespace {
 	}
 
 	void test_lengths_and_kinds() {
-		const std::vector<std::size_t> lengths{8, 12, 16, 5, 9, 4, 4, 24, 5, 7, 4};
-		const std::vector<std::uint8_t> kinds{0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13, 0x20, 0x30, 0x31, 0x32};
+		const std::vector<std::size_t> lengths{8, 12, 16, 8, 5, 9, 4, 4, 24, 5, 7, 4};
+		const std::vector<std::uint8_t> kinds{0x01, 0x02, 0x03, 0x04, 0x10, 0x11, 0x12, 0x13, 0x20, 0x30, 0x31, 0x32};
 		const auto s = samples();
 		for (std::size_t i = 0; i < s.size(); ++i) {
 			const auto e = proto::encode(s[i]);

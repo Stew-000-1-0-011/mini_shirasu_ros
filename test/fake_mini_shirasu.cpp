@@ -4,6 +4,7 @@
 /// minishirasu-firm の設計書の状態機械のうち、ノードが使う部分だけを真似る。
 /// - SetParam は無効中だけ受け付ける。SetMode は必須の設定が揃っていないと Nack (理由 3)
 /// - 速度は目標に 1 次遅れで追従し、位置はその積分。Status を status_period_ms ごとに返す
+/// - 電流・デューティのモードでは、受けた目標を Status の current にそのまま入れて返す
 
 #include <chrono>
 #include <cmath>
@@ -66,6 +67,8 @@ namespace {
 				if (this->mode_ == proto::mode::velocity) { this->target_ = t->velocity; }
 			} else if (const auto* c = std::get_if<proto::TargetCurrent>(&m)) {
 				if (this->mode_ == proto::mode::current) { this->target_ = c->current; }
+			} else if (const auto* d = std::get_if<proto::TargetDuty>(&m)) {
+				if (this->mode_ == proto::mode::duty) { this->target_ = d->duty; }
 			} else if (const auto* p = std::get_if<proto::SetParam>(&m)) {
 				if (this->mode_ != proto::mode::disabled) {
 					this->reply(proto::Nack{.command = proto::kind::set_param, .reason = proto::nack_reason::output_enabled});
@@ -116,8 +119,11 @@ namespace {
 				return;
 			}
 			this->ticks_ = 0;
+			// 電流・デューティのモードでは、受けた目標をそのまま current に入れて返す (届いたかを見るため)
+			const bool echo = this->mode_ == proto::mode::current || this->mode_ == proto::mode::duty;
 			this->send(this->status_id_, proto::Status{
 				.mode = this->mode_,
+				.current = echo ? static_cast<float>(this->target_) : 0.f,
 				.velocity = static_cast<float>(this->velocity_),
 				.position = proto::revolutions_to_q16_16(this->position_),
 				.vdc = 24.0f,

@@ -14,6 +14,7 @@ namespace mini_shirasu_ros::protocol {
 			case kind::target_current: return 1 + 4 + 1;
 			case kind::target_velocity: return 1 + 8 + 1;
 			case kind::target_position: return 1 + 12 + 1;
+			case kind::target_duty: return 1 + 4 + 1;
 			case kind::set_mode: return 1 + 1 + 1;
 			case kind::set_param: return 1 + 5 + 1;
 			case kind::reset_fault: return 1 + 0 + 1;
@@ -88,6 +89,7 @@ namespace mini_shirasu_ros::protocol {
 				[](const TargetCurrent&) { return kind::target_current; },
 				[](const TargetVelocity&) { return kind::target_velocity; },
 				[](const TargetPosition&) { return kind::target_position; },
+				[](const TargetDuty&) { return kind::target_duty; },
 				[](const SetMode&) { return kind::set_mode; },
 				[](const SetParam&) { return kind::set_param; },
 				[](const ResetFault&) { return kind::reset_fault; },
@@ -177,6 +179,7 @@ namespace mini_shirasu_ros::protocol {
 					w.f32(m.velocity_ff);
 					w.f32(m.accel_ff);
 				},
+				[&](const TargetDuty& m) { w.f32(m.duty); },
 				[&](const SetMode& m) { w.u8(m.mode); },
 				[&](const SetParam& m) {
 					w.u8(m.id);
@@ -236,6 +239,7 @@ namespace mini_shirasu_ros::protocol {
 			const float v = r.f32();
 			return TargetPosition{.position = p, .velocity_ff = v, .accel_ff = r.f32()};
 		}
+		case kind::target_duty: return TargetDuty{.duty = r.f32()};
 		case kind::set_mode: return SetMode{.mode = r.u8()};
 		case kind::set_param: {
 			const std::uint8_t id = r.u8();
