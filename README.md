@@ -66,6 +66,9 @@ ros2 topic pub -r 20 /mini_shirasu_node/target_velocity std_msgs/msg/Float64 "{d
 - Nack が返ったら理由 (設定エラーなら原因の設定名も) をログに出し、残りの手順は送らない。
   ただし `SetParam` への設定エラーは、最後の `SetParam` までは無視して続ける
   (基板は値を保存してから設定全体を検査するので、前回の無効な値が残っていると途中で返る)
+- 設定中に異常ラッチ (`fault is latched`) で断られたら、1 秒後に `ResetFault` からやり直す
+  (モータ電源が入る前に起動した、基板が異常のまま再起動した、など)。異常の原因が残っていれば繰り返す。
+  走行中に届いた異常の通知 (`driver fault`) は自分では解除しないので、原因を確かめてから `~/reset_fault` を呼ぶ
 - 設定が済んだ後に Status が `status_timeout` 以上途切れたら、基板が再起動して設定が消えたとみなし、設定し直す
   (`status_period_ms` を 0 にするなら `status_timeout` も 0 にすること)
 
@@ -141,3 +144,6 @@ CAN フレームへの分割と再結合、Q16.16)。
 ros2 run mini_shirasu_ros fake_mini_shirasu
 ros2 run mini_shirasu_ros mini_shirasu_node --ros-args -r __node:=wheel0 --params-file /path/to/oumuamua/src/oumuamua_bringup/config/mini_shirasu.yaml
 ```
+
+模擬基板を `-p faulty_resets:=2` で起動すると、異常ラッチが掛かった状態で始まり、最初の 2 回の `ResetFault` の後も
+すぐまた異常になる (異常の原因が残っているとき)。ノードが解除からやり直して、3 回目で設定が済むのを確かめられる。

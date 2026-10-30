@@ -329,7 +329,7 @@ namespace {
 			}
 
 			if (this->retry_configuration_ && (now - this->last_attempt_).seconds() > 1.0) {
-				this->start_configuration();
+				this->start_configuration(std::exchange(this->reset_fault_on_retry_, false));
 				return;
 			}
 
@@ -483,6 +483,14 @@ namespace {
 				this->get_logger(), "%s rejected: %s%s",
 				command_text(this->pending_->command).c_str(), nack_reason_text(n.reason), detail.c_str()
 			);
+			// 設定中に異常ラッチで断られたら (電源が入る前に起動した、基板が異常のまま再起動したなど)、
+			// 1 秒後に異常ラッチの解除からやり直す。異常の原因が残っていれば、また断られて繰り返す。
+			// 走行中の異常 (FaultNotice) は、原因が分からないまま動かし続けないよう、自分では解除しない
+			if (n.reason == proto::nack_reason::fault_latched && this->configuring_) {
+				RCLCPP_WARN(this->get_logger(), "resetting the fault and retrying the configuration in 1 s");
+				this->retry_configuration_ = true;
+				this->reset_fault_on_retry_ = true;
+			}
 			this->abort_commands();
 		}
 
@@ -512,6 +520,7 @@ namespace {
 		bool configured_{false};
 		bool enabled_{false};
 		bool retry_configuration_{false};
+		bool reset_fault_on_retry_{false};  ///< 設定のやり直しを異常ラッチの解除から始める
 		rclcpp::Time last_attempt_{};
 		std::deque<proto::Message> queue_{};
 		std::optional<Pending> pending_{};

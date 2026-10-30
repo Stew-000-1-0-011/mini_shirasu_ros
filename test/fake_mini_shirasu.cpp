@@ -33,6 +33,10 @@ namespace {
 			this->response_id_ =
 				static_cast<std::uint32_t>(this->declare_parameter<std::int64_t>("can_id.response", 0x140));
 			this->tau_ = this->declare_parameter<double>("tau", 0.05);
+			// 起動時に異常ラッチが掛かっていて、最初のこの回数の ResetFault の後もすぐまた異常になる
+			// (電源が入る前に起動した、など異常の原因が残っているとき)
+			this->faulty_resets_ = this->declare_parameter<std::int64_t>("faulty_resets", 0);
+			if (this->faulty_resets_ > 0) { this->mode_ = proto::mode::fault; }
 
 			this->rx_pub_ = this->create_publisher<Frame>("robomas_can_rx", 100);
 			this->tx_sub_ = this->create_subscription<Frame>(
@@ -97,8 +101,14 @@ namespace {
 				this->target_ = 0.0;
 				this->reply(proto::Ack{.command = proto::kind::set_mode});
 			} else if (std::holds_alternative<proto::ResetFault>(m)) {
-				if (this->mode_ == proto::mode::fault) { this->mode_ = proto::mode::disabled; }
 				this->reply(proto::Ack{.command = proto::kind::reset_fault});
+				if (this->faulty_resets_ > 0) {
+					--this->faulty_resets_;
+					this->mode_ = proto::mode::fault;
+					this->reply(proto::FaultNotice{});
+				} else if (this->mode_ == proto::mode::fault) {
+					this->mode_ = proto::mode::disabled;
+				}
 			} else if (std::holds_alternative<proto::SetOrigin>(m)) {
 				this->position_ = 0.0;
 				this->reply(proto::Ack{.command = proto::kind::set_origin});
@@ -144,6 +154,7 @@ namespace {
 
 		std::uint32_t target_id_{}, status_id_{}, command_id_{}, response_id_{};
 		double tau_{};
+		std::int64_t faulty_resets_{};
 		std::uint8_t mode_{proto::mode::disabled};
 		std::map<std::uint8_t, float> params_{};
 		double target_{}, velocity_{}, position_{};
